@@ -281,6 +281,7 @@ const createStudent = async (req: Request, res: Response) => {
 - JOI gives a schema itself so we will use in the student.controller.ts. Since we are getting the data in the controller from client side so that we can check here using JOI
 
 - Import JOI in student.controller.ts
+- This is inside same file to understand better
 
 ```ts
 // student.controller.ts
@@ -491,9 +492,7 @@ export const StudentController = {
 - we can use this validator in separate file to make out code more organized
 
 ```ts
-// student.validation.ts
-//  creating a student validation using JOI
-
+// student.joi.validator.ts
 import Joi from 'joi';
 
 const userNameSchema = Joi.object({
@@ -525,7 +524,7 @@ const localGuardianSchema = Joi.object({
 
 export const studentValidationSchema = Joi.object({
   id: Joi.string().required(),
-  password: Joi.string().required().max(30),
+  // password: Joi.string().required().max(30),
   name: userNameSchema.required(),
   gender: Joi.string().valid('male', 'female', 'other').required(),
   dateOfBirth: Joi.string(),
@@ -771,7 +770,7 @@ export const StudentModel = model<Student>('Student', studentSchema);
 import { Request, Response } from 'express';
 import { StudentServices } from './student.services';
 
-import studentValidationSchema from './student.validation';
+import studentValidationSchema from './student.joi.validation';
 
 const createStudent = async (req: Request, res: Response) => {
   try {
@@ -782,6 +781,8 @@ const createStudent = async (req: Request, res: Response) => {
 
     // console.log(value);
     // console.log(error);
+
+    // USING ZOD
 
     if (error) {
       res.status(500).json({
