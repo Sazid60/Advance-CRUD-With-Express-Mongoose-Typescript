@@ -37,11 +37,11 @@ const userNameSchema = new Schema<UserName>({
   lastName: {
     type: String,
     required: [true, 'Last Name is Required'],
-    validate: {
-      validator: (value: string) => validator.isAlpha(value),
-      // here normal function will work since we are not using custom validator
-      message: '{VALUE} is not valid',
-    },
+    // validate: {
+    //   validator: (value: string) => validator.isAlpha(value),
+    //   // here normal function will work since we are not using custom validator
+    //   message: '{VALUE} is not valid',
+    // },
   },
 });
 

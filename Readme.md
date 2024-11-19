@@ -282,19 +282,483 @@ const createStudent = async (req: Request, res: Response) => {
 
 - Import JOI in student.controller.ts
 
-  ```ts
-  import Joi from 'joi';
-  ```
+```ts
+// student.controller.ts
+import { Request, Response } from 'express';
+import { StudentServices } from './student.services';
+import Joi from 'joi';
 
-  ```ts
-  //  creating a student validation using JOI
-  const JoiValidationSchema = Joi.object({
-    id: Joi.string(),
-    name: {
-      firstName: Joi.string().max(20).required(),
-      middleName: Joi.string().max(20),
-      lastName: Joi.string().max(20),
-    },
-    gender: Joi.string().required().valid(['male', 'female', 'other']),
-  });
-  ```
+const createStudent = async (req: Request, res: Response) => {
+  try {
+    //  creating a student validation using JOI
+    // Sub-schemas
+    const userNameSchema = Joi.object({
+      firstName: Joi.string()
+        .trim()
+        .required()
+        .max(20)
+        .custom((value, helpers) => {
+          const firstNameStr = value.charAt(0).toUpperCase() + value.slice(1);
+          if (value !== firstNameStr) {
+            return helpers.error('string.capitalized', { value });
+          }
+          return value;
+        })
+        .messages({
+          'any.required': 'First Name is Required',
+          'string.max': 'First Name should not be more than 20 letters',
+          'string.capitalized': '{#value} is not capitalized Format',
+        }),
+      middleName: Joi.string().trim().optional(),
+      lastName: Joi.string()
+        .trim()
+        .required()
+        .regex(/^[A-Za-z]+$/)
+        .messages({
+          'any.required': 'Last Name is Required',
+          'string.pattern.base': '{#value} is not valid',
+        }),
+    });
+
+    const guardianSchema = Joi.object({
+      fatherName: Joi.string().trim().required().messages({
+        'any.required': 'Father Name is Required',
+      }),
+      fatherOccupation: Joi.string().trim().required().messages({
+        'any.required': 'Father Occupation is Required',
+      }),
+      fatherContactNo: Joi.string().trim().required().messages({
+        'any.required': 'Father Contact No is Required',
+      }),
+      motherName: Joi.string().trim().required().messages({
+        'any.required': 'Mother Name is Required',
+      }),
+      motherOccupation: Joi.string().trim().required().messages({
+        'any.required': 'Mother Occupation is Required',
+      }),
+      motherContactNo: Joi.string().trim().required().messages({
+        'any.required': 'Mother Contact No is Required',
+      }),
+    });
+
+    const localGuardianSchema = Joi.object({
+      name: Joi.string().trim().required().messages({
+        'any.required': 'Local Guardian Name is Required',
+      }),
+      occupation: Joi.string().trim().required().messages({
+        'any.required': 'Local Guardian Occupation is Required',
+      }),
+      contactNo: Joi.string().trim().required().messages({
+        'any.required': 'Local Guardian Contact No is Required',
+      }),
+      address: Joi.string().trim().required().messages({
+        'any.required': 'Local Guardian Address is Required',
+      }),
+    });
+
+    // Main Schema
+    const studentValidationSchema = Joi.object({
+      id: Joi.string().trim().required().messages({
+        'any.required': 'Student ID is Required',
+      }),
+      name: userNameSchema.required().messages({
+        'any.required': 'Student Name is Required',
+      }),
+      gender: Joi.string()
+        .valid('male', 'female', 'other')
+        .required()
+        .messages({
+          'any.required': 'Gender is Required',
+          'any.only':
+            '{#value} is not valid. Gender must be either "male", "female", or "other"',
+        }),
+      dateOfBirth: Joi.string().trim().required().messages({
+        'any.required': 'Date of Birth is Required',
+      }),
+      email: Joi.string().email().trim().required().messages({
+        'any.required': 'Email is Required',
+        'string.email': '{#value} is not a valid email type',
+      }),
+      contactNo: Joi.string().trim().required().messages({
+        'any.required': 'Contact Number is Required',
+      }),
+      emergencyContactNo: Joi.string().trim().required().messages({
+        'any.required': 'Emergency Contact Number is Required',
+      }),
+      bloodGroup: Joi.string()
+        .valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')
+        .required()
+        .messages({
+          'any.required': 'Blood Group is Required',
+          'any.only':
+            'Blood Group must be one of "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"',
+        }),
+      presentAddress: Joi.string().trim().required().messages({
+        'any.required': 'Present Address is Required',
+      }),
+      permanentAddress: Joi.string().trim().required().messages({
+        'any.required': 'Permanent Address is Required',
+      }),
+      guardian: guardianSchema.required().messages({
+        'any.required': 'Guardian Information is Required',
+      }),
+      localGuardian: localGuardianSchema.required().messages({
+        'any.required': 'Local Guardian Information is Required',
+      }),
+      profileImg: Joi.string().trim().required().messages({
+        'any.required': 'Profile Image is Required',
+      }),
+      isActive: Joi.string()
+        .valid('active', 'blocked')
+        .required()
+        .default('active')
+        .messages({
+          'any.required': 'Account Status is Required',
+          'any.only': 'Account status must be either "active" or "blocked"',
+        }),
+    });
+
+    const { student: studentData } = req.body;
+
+    // JOI validation
+    const { value, error } = studentValidationSchema.validate(studentData);
+    // console.log(value);
+    // console.log(error);
+
+    if (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Something went wrong',
+        error: error.details,
+      });
+    }
+
+    // will call service function to send this data
+    const result = await StudentServices.createStudentInDB(studentData);
+
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Student Is Created Successfully',
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong',
+      error: err,
+    });
+  }
+};
+
+// for getting all students
+const getAllStudents = async (req: Request, res: Response) => {
+  try {
+    const result = await StudentServices.getAllStudentsFromDB();
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Students are retrieved successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// for getting single students
+const getSingleStudent = async (req: Request, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const result = await StudentServices.getSingleStudentFromDB(studentId);
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Students is retrieved successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+export const StudentController = {
+  createStudent,
+  getAllStudents,
+  getSingleStudent,
+};
+```
+
+- we can use this validator in seperate file to make out code more organized
+
+```ts
+// student.validation.ts
+//  creating a student validation using JOI
+
+import Joi from 'joi';
+
+// Sub-schemas
+const userNameValidationSchema = Joi.object({
+  firstName: Joi.string()
+    .trim()
+    .required()
+    .max(20)
+    .custom((value, helpers) => {
+      const firstNameStr = value.charAt(0).toUpperCase() + value.slice(1);
+      if (value !== firstNameStr) {
+        return helpers.error('string.capitalized', { value });
+      }
+      return value;
+    })
+    .messages({
+      'any.required': 'First Name is Required',
+      'string.max': 'First Name should not be more than 20 letters',
+      'string.capitalized': '{#value} is not capitalized Format',
+    }),
+  middleName: Joi.string().trim().optional(),
+  lastName: Joi.string()
+    .trim()
+    .required()
+    .regex(/^[A-Za-z]+$/)
+    .messages({
+      'any.required': 'Last Name is Required',
+      'string.pattern.base': '{#value} is not valid',
+    }),
+});
+
+const guardianValidationSchema = Joi.object({
+  fatherName: Joi.string().trim().required().messages({
+    'any.required': 'Father Name is Required',
+  }),
+  fatherOccupation: Joi.string().trim().required().messages({
+    'any.required': 'Father Occupation is Required',
+  }),
+  fatherContactNo: Joi.string().trim().required().messages({
+    'any.required': 'Father Contact No is Required',
+  }),
+  motherName: Joi.string().trim().required().messages({
+    'any.required': 'Mother Name is Required',
+  }),
+  motherOccupation: Joi.string().trim().required().messages({
+    'any.required': 'Mother Occupation is Required',
+  }),
+  motherContactNo: Joi.string().trim().required().messages({
+    'any.required': 'Mother Contact No is Required',
+  }),
+});
+
+const localGuardianValidationSchema = Joi.object({
+  name: Joi.string().trim().required().messages({
+    'any.required': 'Local Guardian Name is Required',
+  }),
+  occupation: Joi.string().trim().required().messages({
+    'any.required': 'Local Guardian Occupation is Required',
+  }),
+  contactNo: Joi.string().trim().required().messages({
+    'any.required': 'Local Guardian Contact No is Required',
+  }),
+  address: Joi.string().trim().required().messages({
+    'any.required': 'Local Guardian Address is Required',
+  }),
+});
+
+// Main Schema
+const studentValidationSchema = Joi.object({
+  id: Joi.string().trim().required().messages({
+    'any.required': 'Student ID is Required',
+  }),
+  name: userNameValidationSchema.required().messages({
+    'any.required': 'Student Name is Required',
+  }),
+  gender: Joi.string().valid('male', 'female', 'other').required().messages({
+    'any.required': 'Gender is Required',
+    'any.only':
+      '{#value} is not valid. Gender must be either "male", "female", or "other"',
+  }),
+  dateOfBirth: Joi.string().trim().required().messages({
+    'any.required': 'Date of Birth is Required',
+  }),
+  email: Joi.string().email().trim().required().messages({
+    'any.required': 'Email is Required',
+    'string.email': '{#value} is not a valid email type',
+  }),
+  contactNo: Joi.string().trim().required().messages({
+    'any.required': 'Contact Number is Required',
+  }),
+  emergencyContactNo: Joi.string().trim().required().messages({
+    'any.required': 'Emergency Contact Number is Required',
+  }),
+  bloodGroup: Joi.string()
+    .valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')
+    .required()
+    .messages({
+      'any.required': 'Blood Group is Required',
+      'any.only':
+        'Blood Group must be one of "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"',
+    }),
+  presentAddress: Joi.string().trim().required().messages({
+    'any.required': 'Present Address is Required',
+  }),
+  permanentAddress: Joi.string().trim().required().messages({
+    'any.required': 'Permanent Address is Required',
+  }),
+  guardian: guardianValidationSchema.required().messages({
+    'any.required': 'Guardian Information is Required',
+  }),
+  localGuardian: localGuardianValidationSchema.required().messages({
+    'any.required': 'Local Guardian Information is Required',
+  }),
+  profileImg: Joi.string().trim().required().messages({
+    'any.required': 'Profile Image is Required',
+  }),
+  isActive: Joi.string()
+    .valid('active', 'blocked')
+    .required()
+    .default('active')
+    .messages({
+      'any.required': 'Account Status is Required',
+      'any.only': 'Account status must be either "active" or "blocked"',
+    }),
+});
+
+export default studentValidationSchema;
+```
+
+- as we are using JOI we can remove the unnecessary validators from our main schema
+
+```ts
+// student.schema.ts
+import { Schema, model } from 'mongoose';
+import {
+  Guardian,
+  LocalGuardian,
+  Student,
+  UserName,
+} from './student.interface';
+
+// Sub-schema for User Name
+const userNameSchema = new Schema<UserName>({
+  firstName: { type: String },
+  middleName: { type: String },
+  lastName: { type: String },
+});
+
+// Guardian schema
+const guardianSchema = new Schema<Guardian>({
+  fatherName: { type: String },
+  fatherOccupation: { type: String },
+  fatherContactNo: { type: String },
+  motherName: { type: String },
+  motherOccupation: { type: String },
+  motherContactNo: { type: String },
+});
+
+// Local Guardian schema
+const localGuardianSchema = new Schema<LocalGuardian>({
+  name: { type: String },
+  occupation: { type: String },
+  contactNo: { type: String },
+  address: { type: String },
+});
+
+// Main Student Schema
+const studentSchema = new Schema<Student>({
+  id: { type: String },
+  name: { type: userNameSchema },
+  gender: { type: String, enum: ['male', 'female', 'other'] },
+  dateOfBirth: { type: String },
+  email: { type: String },
+  contactNo: { type: String },
+  emergencyContactNo: { type: String },
+  bloodGroup: { type: String },
+  presentAddress: { type: String },
+  permanentAddress: { type: String },
+  guardian: { type: guardianSchema },
+  localGuardian: { type: localGuardianSchema },
+  profileImg: { type: String },
+  isActive: { type: String, enum: ['active', 'blocked'] },
+});
+
+// Create a model from the schema
+export const StudentModel = model<Student>('Student', studentSchema);
+```
+
+- We will get the validator in student.controller.ts
+
+```ts
+import { Request, Response } from 'express';
+import { StudentServices } from './student.services';
+
+import studentValidationSchema from './student.validation';
+
+const createStudent = async (req: Request, res: Response) => {
+  try {
+    const { student: studentData } = req.body;
+
+    // JOI validation
+    const { value, error } = studentValidationSchema.validate(studentData);
+
+    // console.log(value);
+    // console.log(error);
+
+    if (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Something went wrong',
+        error: error.details,
+      });
+    }
+
+    // will call service function to send this data
+    const result = await StudentServices.createStudentInDB(value);
+
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Student Is Created Successfully',
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong',
+      error: err,
+    });
+  }
+};
+
+// for getting all students
+const getAllStudents = async (req: Request, res: Response) => {
+  try {
+    const result = await StudentServices.getAllStudentsFromDB();
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Students are retrieved successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+// for getting single students
+const getSingleStudent = async (req: Request, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const result = await StudentServices.getSingleStudentFromDB(studentId);
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Students is retrieved successfully',
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+};
+export const StudentController = {
+  createStudent,
+  getAllStudents,
+  getSingleStudent,
+};
+```
