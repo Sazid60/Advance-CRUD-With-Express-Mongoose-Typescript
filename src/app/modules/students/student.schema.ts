@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import validator from 'validator';
+// import validator from 'validator';
 import {
   Guardian,
   LocalGuardian,
@@ -14,20 +14,20 @@ const userNameSchema = new Schema<UserName>({
     required: [true, 'First Name is Required'],
     trim: true, // Names often have unwanted whitespace
     maxlength: [20, 'First Name should not be more than 20 letters'],
-    validate: {
-      validator: function (value: string) {
-        const firstNameStr = value.charAt(0).toUpperCase() + value.slice(1);
-        // console.log(value);
-        // if (value !== firstNameStr) {
-        //   return false;
-        // }
-        // return true;
+    // validate: {
+    //   validator: function (value: string) {
+    //     const firstNameStr = value.charAt(0).toUpperCase() + value.slice(1);
+    //     // console.log(value);
+    //     // if (value !== firstNameStr) {
+    //     //   return false;
+    //     // }
+    //     // return true;
 
-        // shortcut
-        return firstNameStr === value;
-      },
-      message: '{VALUE} is not capitalized Format',
-    },
+    //     // shortcut
+    //     return firstNameStr === value;
+    //   },
+    //   message: '{VALUE} is not capitalized Format',
+    // },
   },
   middleName: {
     type: String,
@@ -135,10 +135,10 @@ const studentSchema = new Schema<Student>({
     required: [true, 'Email is Required'],
     unique: true, // Email typically doesn't need trimming here
     trim: true, // Trim for ensuring valid input
-    validate: {
-      validator: (value: string) => validator.isEmail(value),
-      message: '{VALUE} is not a email type',
-    },
+    // validate: {
+    //   validator: (value: string) => validator.isEmail(value),
+    //   message: '{VALUE} is not a email type',
+    // },
   },
 
   contactNo: {
