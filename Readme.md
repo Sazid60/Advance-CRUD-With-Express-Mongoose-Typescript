@@ -12,12 +12,17 @@
 2. custom validation
 3. third party validation lie (validator/zod/joi)
 
-- In last module we have not write the enums in right way. Now its time to fix
-  ![alt text](image.png)
-  [Builtin Validator Of Mongoose](https://web.postman.co/workspace/My-Workspace~4007399e-8b24-4c08-87d6-44fa47b094da/request/39770401-33765b8e-2a52-4d42-b500-46b5c3bbea14)
+- In last module we have not write the enums in right way. Now its time to fix.
+
+![alt text](image.png)
+
+[Builtin Validator Of Mongoose](https://mongoosejs.com/docs/validation.html#built-in-validators)
+
 - Inside student.schema.ts
 
 ```ts
+// student.schema.ts
+
   // problematic enum
   // gender: ['male', 'female'],
   // fixed enum
@@ -29,6 +34,8 @@
 ```
 
 ```ts
+// student.schema.ts
+
   // problematic enum
   // bloodGroup: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
   // fixed enum
@@ -41,6 +48,8 @@
 - Enum fix and default value setting
 
 ```ts
+// student.schema.ts
+
   // problematic enum
   // isActive: ['active', 'blocked'],
 
@@ -56,6 +65,7 @@
 - Bug fix from previous student.schema.ts, since those was not made required
 
 ```ts
+// student.schema.ts
   name: {
     type: userNameSchema,
     required: true,
@@ -74,6 +84,7 @@
 - If we ant to send any custom message if anything required has been missed. We can set error message in the required field. The error message will be shown in the command section where are running the server
 
 ```ts
+// student.schema.ts
   name: {
     type: userNameSchema,
     required: [true, 'First name labei lagbe'],
@@ -83,6 +94,7 @@
 - For setting a custom message in the enum we have to do
 
 ```ts
+// student.schema.ts
   gender: {
     type: String,
     enum: {
@@ -96,6 +108,7 @@
 - If we want to grab the exact value from client and show in the message
 
 ```ts
+// student.schema.ts
   gender: {
     type: String,
     enum: {
@@ -109,10 +122,102 @@
 - If we want the id to be unique and no repeat
 
 ```ts
+// student.schema.ts
   id: {
     type: String,
     required: true,
     unique:true
   },
 
+```
+
+## 9-2 How to do custom validation
+
+- we can set max length of a schema types
+
+```ts
+// student.schema.ts
+  firstName: {
+    type: String,
+    required: [true, 'First Name is Required'],
+    maxlength: 20,
+  },
+```
+
+- We set a custom message with the max length
+
+```ts
+// student.schema.ts
+  firstName: {
+    type: String,
+    required: [true, 'First Name is Required'],
+    maxlength: [20, 'Name should be less than 20 letter']
+  },
+```
+
+- We can send the error message to client as well
+
+```ts
+//  inside student.controller.ts
+const createStudent = async (req: Request, res: Response) => {
+  try {
+    const { student: studentData } = req.body;
+
+    // will call service function to send this data
+    const result = await StudentServices.createStudentInDB(studentData);
+
+    // send response
+    res.status(200).json({
+      success: true,
+      message: 'Student Is Created Successfully',
+      data: result,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Something went wrong',
+      error: err,
+    });
+  }
+};
+```
+
+- If we want to remove the unnecessary spaces between the words we can use trim
+
+```ts
+// student.schema.ts
+  firstName: {
+    type: String,
+    required: [true, 'First Name is Required'],
+    trim: true,
+    maxlength: [20, 'First Name should not be more than 20 letter'],
+  },
+```
+
+### Custom Validator
+
+- we will use normal function because dist will not work in arrow function
+-
+
+```ts
+  firstName: {
+    type: String,
+    required: [true, 'First Name is Required'],
+    trim: true, // Names often have unwanted whitespace
+    maxlength: [20, 'First Name should not be more than 20 letters'],
+    validate: {
+      validator: function (value: string) {
+        const firstNameStr = value.charAt(0).toUpperCase() + value.slice(1);
+        // console.log(value);
+        // if (value !== firstNameStr) {
+        //   return false;
+        // }
+        // return true;
+
+        // shortcut
+        return firstNameStr === value;
+      },
+      message: '{VALUE} is not capitalized Format',
+    },
+  },
 ```
