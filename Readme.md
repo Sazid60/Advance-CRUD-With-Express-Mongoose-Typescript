@@ -221,3 +221,80 @@ const createStudent = async (req: Request, res: Response) => {
     },
   },
 ```
+
+## 9-3 How to validate using validator and Joi package
+
+- Custom made validation will take more time. so that we will use validation library
+
+### Using Npm Validator
+
+- Easiest validator npm package is [Validator Npm](https://www.npmjs.com/package/validator)
+- npm i validator
+- By default this validator does not support typescript
+- We should use npm i -D @types/validator this. [typescript enabled validator system of this npm](https://www.npmjs.com/package/@types/validator)
+- Follow the installation process [Validator npm Home page](https://github.com/validatorjs/validator.js)
+- Import inside student.schema.ts i mean in the model
+
+  ```ts
+  import validator from 'validator';
+  ```
+
+  - Validator npm in last name
+
+```ts
+    // using npm validator
+  lastName: {
+    type: String,
+    required: [true, 'Last Name is Required'],
+    validate: {
+      validator: (value: string) => validator.isAlpha(value),
+      // here normal function will work since we are not using custom validator
+      message: '{VALUE} is not valid',
+    },
+  },
+```
+
+```ts
+
+  // using npm validator
+  email: {
+    type: String,
+    required: [true, 'Email is Required'],
+    unique: true, // Email typically doesn't need trimming here
+    trim: true, // Trim for ensuring valid input
+    validate: {
+      validator: (value: string) => validator.isEmail(value),
+      message: '{VALUE} is not a email type',
+    },
+  },
+
+```
+
+### Using JOI Validator
+
+- We can use JOI since it support typescript
+  [JOI NPM VALIDATOR](https://www.npmjs.com/package/joi)
+
+- install JOI npm i joi
+  [JOI DOCS](https://joi.dev/api/?v=17.13.3)
+
+- JOI gives a schema itself so we will use in the student.controller.ts. Since we are getting the data in the controller from client side so that we can check here using JOI
+
+- Import JOI in student.controller.ts
+
+  ```ts
+  import Joi from 'joi';
+  ```
+
+  ```ts
+  //  creating a student validation using JOI
+  const JoiValidationSchema = Joi.object({
+    id: Joi.string(),
+    name: {
+      firstName: Joi.string().max(20).required(),
+      middleName: Joi.string().max(20),
+      lastName: Joi.string().max(20),
+    },
+    gender: Joi.string().required().valid(['male', 'female', 'other']),
+  });
+  ```

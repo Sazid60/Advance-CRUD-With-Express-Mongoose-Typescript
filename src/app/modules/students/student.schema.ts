@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import validator from 'validator';
 import {
   Guardian,
   LocalGuardian,
@@ -32,10 +33,15 @@ const userNameSchema = new Schema<UserName>({
     type: String,
     trim: true, // Middle names may also require trimming
   },
+  // using npm validator
   lastName: {
     type: String,
     required: [true, 'Last Name is Required'],
-    trim: true, // Trim is necessary for last names
+    validate: {
+      validator: (value: string) => validator.isAlpha(value),
+      // here normal function will work since we are not using custom validator
+      message: '{VALUE} is not valid',
+    },
   },
 });
 
@@ -123,11 +129,16 @@ const studentSchema = new Schema<Student>({
     required: [true, 'Date of Birth is Required'],
   },
 
+  // using npm validator
   email: {
     type: String,
     required: [true, 'Email is Required'],
     unique: true, // Email typically doesn't need trimming here
     trim: true, // Trim for ensuring valid input
+    validate: {
+      validator: (value: string) => validator.isEmail(value),
+      message: '{VALUE} is not a email type',
+    },
   },
 
   contactNo: {
