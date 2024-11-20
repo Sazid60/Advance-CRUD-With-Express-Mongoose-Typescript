@@ -160,7 +160,6 @@ const studentSchema = new Schema<Student>({
       message:
         'Blood Group must be one of "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"',
     },
-    required: [true, 'Blood Group is Required'],
   },
 
   presentAddress: {
@@ -187,8 +186,6 @@ const studentSchema = new Schema<Student>({
 
   profileImg: {
     type: String,
-    required: [true, 'Profile Image is Required'],
-    trim: true, // Trim for possible URL whitespace
   },
 
   isActive: {
