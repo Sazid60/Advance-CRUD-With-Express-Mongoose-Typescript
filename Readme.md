@@ -1683,3 +1683,74 @@ export const StudentServices = {
   getSingleStudentFromDB,
 };
 ```
+
+## 9-8 Implement mongoose middleware part
+
+[Mongoose Middleware](https://mongoosejs.com/docs/middleware.html)
+
+- Middleware are called mongoose hooks in mongoose
+
+#### Document middleware
+
+```ts
+schema.pre('save', func);
+schema.post('save', func);
+schema.pre('remove', func);
+schema.post('remove', func);
+```
+
+- 'this' is required here for this reason we will use normal function here
+
+#### Query Middleware
+
+```ts
+schema.pre('find', func);
+schema.post('find', func);
+schema.pre('findOne', func);
+schema.post('findOne', func);
+```
+
+#### Aggregation Middleware
+
+```ts
+schema.pre('aggregate', func);
+schema.post('aggregate', func);
+```
+
+- Middleware should be in schema always
+
+```ts
+// student.schema.ts
+//Pre Save Hook/Middleware : will work on create() or save()
+studentSchema.pre('save', function () {
+  console.log(this, 'pre hoo : will save the data');
+});
+
+//Post Save Hook/Middleware
+studentSchema.post('save', function () {
+  console.log(this, 'post hook : we saved our the data');
+});
+```
+
+- For password security we will use [Bcrypt](https://www.npmjs.com/package/bcrypt)
+- install bcrypt using npm i bcrypt
+- As it does not support typeScript we have to install this all well npm install --save @types/bcrypt
+
+- Converting password into hash using bcrypt
+
+```ts
+// student.schema.ts
+//Pre Save Hook/Middleware : will work on create() or save()
+studentSchema.pre('save', async function (next) {
+  // console.log(this, 'pre hoo : will save the data');
+
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
+  const user = this;
+  // hashing password and saving into db
+  user.password = await bcrypt.hash(
+    user.password,
+    Number(config.bcrypt_salt_rounds),
+  );
+  next();
+});
+```

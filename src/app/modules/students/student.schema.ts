@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import bcrypt from 'bcrypt';
 // import validator from 'validator';
 import {
   TGuardian,
@@ -8,6 +9,7 @@ import {
   StudentModel,
   TUserName,
 } from './student.interface';
+import config from '../../config';
 
 // Sub-schema
 const userNameSchema = new Schema<TUserName>({
@@ -111,8 +113,14 @@ const localGuardian = new Schema<TLocalGuardian>({
 const studentSchema = new Schema<TStudent, StudentModel>({
   id: {
     type: String,
-    required: true,
+    required: [true, 'Id Is Required'],
     unique: true, // IDs don't typically require trimming
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is Required'],
+    unique: true,
+    maxlength: [20, 'Password can not be more than 20 characters'],
   },
 
   name: {
@@ -204,6 +212,26 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     default: 'active',
   },
 });
+
+//Pre Save Hook/Middleware : will work on create() or save()
+studentSchema.pre('save', async function (next) {
+  // console.log(this, 'pre hoo : will save the data');
+
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
+  const user = this; //this refers to the current document
+  // hashing password and saving into db
+  user.password = await bcrypt.hash(
+    user.password,
+    Number(config.bcrypt_salt_rounds),
+  );
+  next();
+});
+
+//Post Save Hook/Middleware
+studentSchema.post('save', function () {
+  console.log(this, 'post hook : we saved our the data');
+});
+
 //_________________________This is for custom Instance method___________
 // studentSchema.methods.isUserExists = async function (id: string) {
 //   const existingUser = await Student.findOne({ id });
