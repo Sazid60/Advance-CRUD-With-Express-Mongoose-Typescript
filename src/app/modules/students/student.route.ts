@@ -10,4 +10,6 @@ router.post('/create-student', StudentController.createStudent);
 router.get('/', StudentController.getAllStudents);
 // get single students
 router.get('/:studentId', StudentController.getSingleStudent);
+// delete student
+router.delete('/:studentId', StudentController.deleteStudent);
 export const StudentRoutes = router;

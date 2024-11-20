@@ -1736,6 +1736,8 @@ studentSchema.post('save', function () {
 - install bcrypt using npm i bcrypt
 - As it does not support typeScript we have to install this all well npm install --save @types/bcrypt
 
+## document middleware
+
 - Converting password into hash using bcrypt
 
 ```ts
@@ -1753,4 +1755,18 @@ studentSchema.pre('save', async function (next) {
   );
   next();
 });
+
+//Post Save Hook/Middleware
+studentSchema.post('save', function (doc, next) {
+  doc.password = '';
+  // console.log(this, 'post hook : we saved our the data');
+  next();
+});
 ```
+
+## 9-9 How to implement delete data in another way
+
+- Document middleware refers to current document
+- Query middleware refers to current query
+- Aggregation Middleware refers to current pipeline
+- See the delete functionality in the codes rote, schema,interface, controller for better understanding

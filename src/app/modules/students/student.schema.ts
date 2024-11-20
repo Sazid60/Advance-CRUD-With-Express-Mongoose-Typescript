@@ -119,7 +119,6 @@ const studentSchema = new Schema<TStudent, StudentModel>({
   password: {
     type: String,
     required: [true, 'Password is Required'],
-    unique: true,
     maxlength: [20, 'Password can not be more than 20 characters'],
   },
 
@@ -211,8 +210,13 @@ const studentSchema = new Schema<TStudent, StudentModel>({
     required: [true, 'Account Status is Required'],
     default: 'active',
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
+// ############################### Document Middleware ##############
 //Pre Save Hook/Middleware : will work on create() or save()
 studentSchema.pre('save', async function (next) {
   // console.log(this, 'pre hoo : will save the data');
@@ -228,10 +232,18 @@ studentSchema.pre('save', async function (next) {
 });
 
 //Post Save Hook/Middleware
-studentSchema.post('save', function () {
-  console.log(this, 'post hook : we saved our the data');
+studentSchema.post('save', function (doc, next) {
+  doc.password = '';
+  // console.log(this, 'post hook : we saved our the data');
+  next();
 });
+// ##############################################################
 
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Query Middleware $$$$$$$$$$$$$$$$
+studentSchema.pre('find', function (next) {
+  console.log(this);
+});
+// $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 //_________________________This is for custom Instance method___________
 // studentSchema.methods.isUserExists = async function (id: string) {
 //   const existingUser = await Student.findOne({ id });
