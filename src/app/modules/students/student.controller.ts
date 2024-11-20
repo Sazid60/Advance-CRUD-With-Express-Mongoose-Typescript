@@ -9,7 +9,7 @@ const createStudent = async (req: Request, res: Response) => {
     const { student: studentData } = req.body;
 
     // using zod
-    const zodValidationData = await studentValidationSchema.parse(studentData);
+    const zodValidationData = studentValidationSchema.parse(studentData);
     // will call service function to send this data
     const result = await StudentServices.createStudentInDB(zodValidationData);
 
@@ -19,10 +19,10 @@ const createStudent = async (req: Request, res: Response) => {
       message: 'Student Is Created Successfully',
       data: result,
     });
-  } catch (err) {
+  } catch (err: any) {
     res.status(500).json({
       success: false,
-      message: 'Something went wrong',
+      message: err.message || 'Something went wrong',
       error: err,
     });
   }

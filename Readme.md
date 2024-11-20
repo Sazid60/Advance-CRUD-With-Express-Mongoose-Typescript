@@ -904,3 +904,100 @@ export const StudentController = {
   getSingleStudent,
 };
 ```
+
+## 9-6 Implement a custom instance method
+
+- We have instance and static method
+- Mongoose have builtin static and instance method
+
+```ts
+studentModel.create(); //builtin static method
+const student = new StudentModel();
+student.save(); //builtin instance methods
+```
+
+- If we want we can make custom static and instance
+
+```ts
+schema->static->model->call on model
+schema->method->model->instance->call on instance
+```
+
+- Builtin instance method of mongoose
+
+```ts
+import { Student } from './student.interface';
+import { StudentModel } from './student.schema';
+
+const createStudentInDB = async (studentData: Student) => {
+  // const result = await StudentModel.create(student); // builtin mongoose static method
+
+  //  using instance method
+  const student = new StudentModel(studentData);
+  const result = await student.save(); //builtin instance method
+  return result;
+};
+
+// getting data service
+const getAllStudentsFromDB = async () => {
+  const result = await StudentModel.find();
+  return result;
+};
+
+// get single student from db
+const getSingleStudentFromDB = async (id: string) => {
+  const result = await StudentModel.findOne({ id });
+  return result;
+};
+export const StudentServices = {
+  createStudentInDB,
+  getAllStudentsFromDB,
+  getSingleStudentFromDB,
+};
+```
+
+- Custom Methods
+  [Static and methods in Mongoose](https://mongoosejs.com/docs/typescript/statics-and-methods.html)
+- Create a type inside the student.interface.ts bellow
+
+```ts
+// student.interface.ts
+// _____________________This is for custom Methods____________
+export type StudentMethods = {
+  isUserExists(id: string): Promise<TStudent | null>;
+};
+
+export type StudentModel = Model<
+  TStudent,
+  Record<string, never>,
+  StudentMethods
+>;
+// _________________________________________________________
+```
+
+```ts
+// student.schema.ts
+// _____________________This is for custom Methods____________
+export type StudentMethods = {
+  isUserExists(id: string): Promise<TStudent | null>;
+};
+
+export type StudentModel = Model<
+  TStudent,
+  Record<string, never>,
+  StudentMethods
+>;
+// _________________________________________________________
+```
+
+```ts
+// inside student.services.ts
+//  using instance method
+const student = new Student(studentData); //create an instance
+
+if (await student.isUserExists(studentData.id)) {
+  throw new Error('User Already Exists');
+}
+const result = await student.save(); //builtin instance method
+return result;
+```
