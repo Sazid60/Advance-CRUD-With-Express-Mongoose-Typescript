@@ -110,111 +110,126 @@ const localGuardian = new Schema<TLocalGuardian>({
 // if we use custom instance model
 // const studentSchema = new Schema<TStudent, StudentModel, StudentMethods>
 // if we use custom static instance model
-const studentSchema = new Schema<TStudent, StudentModel>({
-  id: {
-    type: String,
-    required: [true, 'Id Is Required'],
-    unique: true, // IDs don't typically require trimming
-  },
-  password: {
-    type: String,
-    required: [true, 'Password is Required'],
-    maxlength: [20, 'Password can not be more than 20 characters'],
-  },
-
-  name: {
-    type: userNameSchema,
-    required: [true, 'Student Name is Required'],
-  },
-
-  gender: {
-    type: String,
-    enum: {
-      values: ['male', 'female', 'other'], // No need for trimming in enum values
-      message:
-        '{VALUE} is not valid. Gender must be either "male", "female", or "other"',
+const studentSchema = new Schema<TStudent, StudentModel>(
+  {
+    id: {
+      type: String,
+      required: [true, 'Id Is Required'],
+      unique: true, // IDs don't typically require trimming
     },
-    required: [true, 'Gender is Required'],
-  },
+    password: {
+      type: String,
+      required: [true, 'Password is Required'],
+      maxlength: [20, 'Password can not be more than 20 characters'],
+    },
 
-  dateOfBirth: {
-    type: String,
-    required: [true, 'Date of Birth is Required'],
-  },
+    name: {
+      type: userNameSchema,
+      required: [true, 'Student Name is Required'],
+    },
 
-  // using npm validator
-  email: {
-    type: String,
-    required: [true, 'Email is Required'],
-    unique: true, // Email typically doesn't need trimming here
-    trim: true, // Trim for ensuring valid input
-    // validate: {
-    //   validator: (value: string) => validator.isEmail(value),
-    //   message: '{VALUE} is not a email type',
-    // },
-  },
+    gender: {
+      type: String,
+      enum: {
+        values: ['male', 'female', 'other'], // No need for trimming in enum values
+        message:
+          '{VALUE} is not valid. Gender must be either "male", "female", or "other"',
+      },
+      required: [true, 'Gender is Required'],
+    },
 
-  contactNo: {
-    type: String,
-    required: [true, 'Contact Number is Required'],
-    trim: true, // Trim is essential for contact numbers
-  },
+    dateOfBirth: {
+      type: String,
+      required: [true, 'Date of Birth is Required'],
+    },
 
-  emergencyContactNo: {
-    type: String,
-    required: [true, 'Emergency Contact Number is Required'],
-    trim: true, // Trim is essential for contact numbers
-  },
+    // using npm validator
+    email: {
+      type: String,
+      required: [true, 'Email is Required'],
+      unique: true, // Email typically doesn't need trimming here
+      trim: true, // Trim for ensuring valid input
+      // validate: {
+      //   validator: (value: string) => validator.isEmail(value),
+      //   message: '{VALUE} is not a email type',
+      // },
+    },
 
-  bloodGroup: {
-    type: String,
-    enum: {
-      values: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
-      message:
-        'Blood Group must be one of "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"',
+    contactNo: {
+      type: String,
+      required: [true, 'Contact Number is Required'],
+      trim: true, // Trim is essential for contact numbers
+    },
+
+    emergencyContactNo: {
+      type: String,
+      required: [true, 'Emergency Contact Number is Required'],
+      trim: true, // Trim is essential for contact numbers
+    },
+
+    bloodGroup: {
+      type: String,
+      enum: {
+        values: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+        message:
+          'Blood Group must be one of "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"',
+      },
+    },
+
+    presentAddress: {
+      type: String,
+      required: [true, 'Present Address is Required'],
+      trim: true, // Addresses often need trimming
+    },
+
+    permanentAddress: {
+      type: String,
+      required: [true, 'Permanent Address is Required'],
+      trim: true, // Addresses often need trimming
+    },
+
+    guardian: {
+      type: guardianSchema,
+      required: [true, 'Guardian Information is Required'],
+    },
+
+    localGuardian: {
+      type: localGuardian,
+      required: [true, 'Local Guardian Information is Required'],
+    },
+
+    profileImg: {
+      type: String,
+    },
+
+    isActive: {
+      type: String,
+      enum: {
+        values: ['active', 'blocked'], // No need for trimming in enum values
+        message: 'Account status must be either "active" or "blocked"',
+      },
+      required: [true, 'Account Status is Required'],
+      default: 'active',
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
-
-  presentAddress: {
-    type: String,
-    required: [true, 'Present Address is Required'],
-    trim: true, // Addresses often need trimming
-  },
-
-  permanentAddress: {
-    type: String,
-    required: [true, 'Permanent Address is Required'],
-    trim: true, // Addresses often need trimming
-  },
-
-  guardian: {
-    type: guardianSchema,
-    required: [true, 'Guardian Information is Required'],
-  },
-
-  localGuardian: {
-    type: localGuardian,
-    required: [true, 'Local Guardian Information is Required'],
-  },
-
-  profileImg: {
-    type: String,
-  },
-
-  isActive: {
-    type: String,
-    enum: {
-      values: ['active', 'blocked'], // No need for trimming in enum values
-      message: 'Account status must be either "active" or "blocked"',
+  {
+    // this is used to enable mongoose virtuals
+    toJSON: {
+      virtuals: true,
     },
-    required: [true, 'Account Status is Required'],
-    default: 'active',
   },
-  isDeleted: {
-    type: Boolean,
-    default: false,
-  },
+);
+
+// ------------------------------Virtuals-------------------
+studentSchema.virtual('fullName').get(function () {
+  return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`;
 });
+
+// ---------------------------------------------------------------
 
 // ############################### Document Middleware ##############
 //Pre Save Hook/Middleware : will work on create() or save()
@@ -241,7 +256,23 @@ studentSchema.post('save', function (doc, next) {
 
 // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Query Middleware $$$$$$$$$$$$$$$$
 studentSchema.pre('find', function (next) {
-  console.log(this);
+  // console.log(this);
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+studentSchema.pre('findOne', function (next) {
+  // console.log(this);
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+// securing aggregate
+// --- this should be structure
+// [{$match {isDeleted :{$ne :true}}}, { $match: { id:'saziii' }}]
+studentSchema.pre('aggregate', function (next) {
+  // console.log(this.pipeline()); //outcome :  { $match: { id:'saziii' }};
+
+  this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
+  next();
 });
 // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 //_________________________This is for custom Instance method___________

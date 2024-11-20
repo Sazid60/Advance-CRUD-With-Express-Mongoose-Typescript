@@ -1769,4 +1769,24 @@ studentSchema.post('save', function (doc, next) {
 - Document middleware refers to current document
 - Query middleware refers to current query
 - Aggregation Middleware refers to current pipeline
-- See the delete functionality in the codes rote, schema,interface, controller for better understanding
+- See the codes rote, schema,interface, controller for better understanding of query middleware and aggregation
+-
+
+## 9-11 Mongoose Virtuals and Module Summary
+
+- Mongoose Virtuals are properties on a Mongoose document that are not stored in the database but are computed dynamically based on other document fields. They are defined in the Mongoose schema and can be used to create derived or computed properties.
+- Its like which data are not necessary to store in database and if the data are only needed to show to client then the virtuals is neede
+- Virtals are used so that database consumes less storage
+
+```ts
+// ------------------------------Virtuals-------------------
+studentSchema.virtual('fullName').get(function () {
+  return `${this.name.firstName} ${this.name.middleName} ${this.name.lastName}`;
+});
+
+// ---------------------------------------------------------------
+```
+
+![alt text](image-1.png)
+
+- Use This in the bellow of main schema for enabling virtals since its not enabled default
